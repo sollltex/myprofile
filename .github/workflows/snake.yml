@@ -1,0 +1,66 @@
+name: Generate Snake Animation
+
+on:
+  schedule:
+    - cron: "0 0 * * *"  # Runs daily at midnight UTC (adjust as needed)
+  workflow_dispatch: # Allows manual triggering of the workflow
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Generate snake animation
+        uses: Platane/snk@v3.3.0
+        id: snake-gif
+        with:
+          github_user_name: sollltex  # Замените на ваш никнейм GitHub
+          gif_out_path: dist/github-contribution-grid-snake.gif
+          svg_out_path: dist/github-contribution-grid-snake.svg
+
+      - name: Commit and push changes
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: "Update snake animation"
+          branch: main # or your default branch
+          push_options: --force # Убедитесь, что права на запись для GitHub Actions настроены правильно
+
+      - name: Update README
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs')
+            const gifPath = './dist/github-contribution-grid-snake.gif';
+            const svgPath = './dist/github-contribution-grid-snake.svg';
+            let readmeContent = fs.readFileSync('./README.md', 'utf8');
+
+            // Construct GIF image tag
+            const gifImageTag = `![GitHub Contribution Grid Snake Animation](${gifPath})`;
+
+            // Construct SVG image tag
+            const svgImageTag = `![GitHub Contribution Grid Snake Animation](${svgPath})`;
+
+            // Check if the GIF image tag already exists in README
+            if (readmeContent.includes(gifImageTag)) {
+                // Replace existing GIF image tag with the new one
+                readmeContent = readmeContent.replace(new RegExp(gifImageTag.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), gifImageTag); // Escape special characters for regex
+            } else {
+                // Append GIF image tag to the end of the README
+                readmeContent += `\n${gifImageTag}`;
+            }
+
+             // Check if the SVG image tag already exists in README
+            if (readmeContent.includes(svgImageTag)) {
+                // Replace existing SVG image tag with the new one
+                readmeContent = readmeContent.replace(new RegExp(svgImageTag.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), svgImageTag); // Escape special characters for regex
+            } else {
+                // Append SVG image tag to the end of the README
+                readmeContent += `\n${svgImageTag}`;
+            }
+
+            // Write the modified content back to the README file
+            fs.writeFileSync('./README.md', readmeContent);
+
+            console.log("README.md updated successfully!");
